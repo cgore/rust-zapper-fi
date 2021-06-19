@@ -49,7 +49,7 @@ struct GasPriceResponse {
 
 impl Network {
     #[tokio::main]
-    async fn gas_price(&self) -> Result<GasPriceResponse, Box<dyn std::error::Error>> {
+    async fn get_gas_price(&self) -> Result<GasPriceResponse, Box<dyn std::error::Error>> {
         let client = reqwest::Client::new();
         let resp = client.get(API.to_owned() + "/gas-price")
             .query(&[("api_key", API_KEY),
@@ -58,13 +58,16 @@ impl Network {
             .json::<GasPriceResponse>().await?;
         Ok(resp)
     }
+    fn gas_price(&self) -> GasPriceResponse {
+        self.get_gas_price().unwrap()
+    }
     pub fn fast_price(&self) -> f32 {
-        self.gas_price().unwrap().fast
+        self.gas_price().fast
     }
     pub fn instant_gas_price(&self) -> f32 {
-        self.gas_price().unwrap().instant
+        self.gas_price().instant
     }
     pub fn standard_gas_price(&self) -> f32 {
-        self.gas_price().unwrap().standard
+        self.gas_price().standard
     }
 }
