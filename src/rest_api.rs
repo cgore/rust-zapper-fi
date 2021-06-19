@@ -40,52 +40,31 @@ pub enum Network {
     XDAI
 }
 
-impl Network {
-    pub fn gas_price(&self) -> Result<GasPrice, Box<dyn std::error::Error>> {
-        gas_price(self.to_string())
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug)]
-pub struct GasPrice {
+struct GasPrice {
     fast: f32,
     instant: f32,
     standard: f32
 }
 
-#[allow(dead_code)]
-impl GasPrice {
-    pub fn speed(&self, speed: &str) -> Result<f32, &'static str> {
-        match speed {
-            "fast"     => Ok(self.fast),
-            "instant"  => Ok(self.instant),
-            "standard" => Ok(self.standard),
-            _          => Err("unknown gas price speed specification")
-        }
+impl Network {
+    #[tokio::main]
+    async fn gas_price(&self) -> Result<GasPrice, Box<dyn std::error::Error>> {
+        let client = reqwest::Client::new();
+        let resp = client.get(API.to_owned() + "/gas-price")
+            .query(&[("api_key", API_KEY),
+                     ("network", &self.to_string())])
+            .send().await?
+            .json::<GasPrice>().await?;
+        Ok(resp)
     }
-}
-
-#[tokio::main]
-pub async fn gas_price(network: String) -> Result<GasPrice, Box<dyn std::error::Error>> {
-    let client = reqwest::Client::new();
-    let resp = client.get(API.to_owned() + "/gas-price")
-        .query(&[("api_key", API_KEY),
-                 ("network", &network.to_string())])
-        .send().await?
-        .json::<GasPrice>().await?;
-    Ok(resp)
-}
-
-pub fn ethereum_gas_price() -> Result<GasPrice, Box<dyn std::error::Error>> {
-    Network::Ethereum.gas_price()
-}
-
-pub fn ethereum_gas_price_fast() -> f32 {
-    ethereum_gas_price().unwrap().fast
-}
-pub fn ethereum_gas_price_instant() -> f32 {
-    ethereum_gas_price().unwrap().instant
-}
-pub fn ethereum_gas_price_standard() -> f32 {
-    ethereum_gas_price().unwrap().standard
+    pub fn fast_price(&self) -> f32 {
+        self.gas_price().unwrap().fast
+    }
+    pub fn instant_gas_price(&self) -> f32 {
+        self.gas_price().unwrap().instant
+    }
+    pub fn standard_gas_price(&self) -> f32 {
+        self.gas_price().unwrap().standard
+    }
 }
