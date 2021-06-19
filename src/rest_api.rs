@@ -41,7 +41,7 @@ pub enum Network {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct GasPrice {
+struct GasPriceResponse {
     fast: f32,
     instant: f32,
     standard: f32
@@ -49,13 +49,13 @@ struct GasPrice {
 
 impl Network {
     #[tokio::main]
-    async fn gas_price(&self) -> Result<GasPrice, Box<dyn std::error::Error>> {
+    async fn gas_price(&self) -> Result<GasPriceResponse, Box<dyn std::error::Error>> {
         let client = reqwest::Client::new();
         let resp = client.get(API.to_owned() + "/gas-price")
             .query(&[("api_key", API_KEY),
                      ("network", &self.to_string())])
             .send().await?
-            .json::<GasPrice>().await?;
+            .json::<GasPriceResponse>().await?;
         Ok(resp)
     }
     pub fn fast_price(&self) -> f32 {
