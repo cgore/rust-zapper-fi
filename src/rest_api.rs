@@ -1,3 +1,5 @@
+use serde_json;
+
 pub const API: &str = "http://api.zapper.fi/v1";
 
 pub const API_CACHE_TIMEOUT_SECONDS: i32 = 60;
@@ -27,3 +29,13 @@ pub const VALID_POOLS: &'static [&str] = &[
 pub const VALID_NETWORKS: &'static [&str] = &[
     "ethereum", "binance-smart-chain", "polygon", "xdai"
 ];
+
+#[tokio::main]
+pub async fn ethereum_gas_price_standard() -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+    let client = reqwest::Client::new();
+    let resp: serde_json::Value = client.get(API.to_owned() + "/gas-price")
+        .query(&[("api_key", API_KEY)])
+        .send().await?
+        .json().await?;
+    Ok(resp)
+}
