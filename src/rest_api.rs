@@ -32,20 +32,28 @@ pub const VALID_NETWORKS: &'static [&str] = &[
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-struct GasPrice {
+pub struct GasPrice {
     fast: f32,
     instant: f32,
     standard: f32
 }
 
 #[tokio::main]
-pub async fn ethereum_gas_price_standard() -> Result<f32, Box<dyn std::error::Error>> {
+pub async fn ethereum_gas_price() -> Result<GasPrice, Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
     let resp = client.get(API.to_owned() + "/gas-price")
         .query(&[("api_key", API_KEY)])
         .send().await?
         .json::<GasPrice>().await?;
-    println!("HEY {}", resp.fast);
-    println!("HEY {}", resp.standard);
-    Ok(resp.standard)
+    Ok(resp)
+}
+
+pub fn ethereum_gas_price_fast() -> f32 {
+    ethereum_gas_price().unwrap().fast
+}
+pub fn ethereum_gas_price_instant() -> f32 {
+    ethereum_gas_price().unwrap().instant
+}
+pub fn ethereum_gas_price_standard() -> f32 {
+    ethereum_gas_price().unwrap().standard
 }
