@@ -38,14 +38,31 @@ pub struct GasPrice {
     standard: f32
 }
 
+#[allow(dead_code)]
+impl GasPrice {
+    fn speed(&self, speed: &str) -> Result<f32, &'static str> {
+        match speed {
+            "fast"     => Ok(self.fast),
+            "instant"  => Ok(self.instant),
+            "standard" => Ok(self.standard),
+            _          => Err("unknown gas price speed specification")
+        }
+    }
+}
+
 #[tokio::main]
-pub async fn ethereum_gas_price() -> Result<GasPrice, Box<dyn std::error::Error>> {
+pub async fn gas_price(network: &str) -> Result<GasPrice, Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
     let resp = client.get(API.to_owned() + "/gas-price")
-        .query(&[("api_key", API_KEY)])
+        .query(&[("api_key", API_KEY),
+                 ("network", network)])
         .send().await?
         .json::<GasPrice>().await?;
     Ok(resp)
+}
+
+pub fn ethereum_gas_price() -> Result<GasPrice, Box<dyn std::error::Error>> {
+    gas_price("ethereum")
 }
 
 pub fn ethereum_gas_price_fast() -> f32 {
