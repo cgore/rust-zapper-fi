@@ -1,3 +1,7 @@
+use serde::{Serialize, Deserialize};
+use std::string::ToString;
+use strum_macros::Display;
+
 pub const API: &str = "http://api.zapper.fi/v1";
 
 pub const API_CACHE_TIMEOUT_SECONDS: i32 = 60;
@@ -24,12 +28,23 @@ pub const VALID_POOLS: &'static [&str] = &[
     "sfinance", "snowswap", "sushiswap", "uniswap", "linkswap", "dodo", "saddle", "xsigma"
 ];
 
-pub const VALID_NETWORKS: &'static [&str] = &[
-    "ethereum", "binance-smart-chain", "polygon", "xdai"
-];
+#[derive(Display, Debug)]
+pub enum Network {
+    #[strum(serialize = "binance-smart-chain")]
+    BinanceSmartChain,
+    #[strum(serialize = "ethereum")]
+    Ethereum,
+    #[strum(serialize = "polygon")]
+    Polygon,
+    #[strum(serialize = "xdai")]
+    XDAI
+}
 
-
-use serde::{Serialize, Deserialize};
+impl Network {
+    pub fn gas_price(&self) -> Result<GasPrice, Box<dyn std::error::Error>> {
+        gas_price(self.to_string())
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GasPrice {
@@ -40,7 +55,7 @@ pub struct GasPrice {
 
 #[allow(dead_code)]
 impl GasPrice {
-    fn speed(&self, speed: &str) -> Result<f32, &'static str> {
+    pub fn speed(&self, speed: &str) -> Result<f32, &'static str> {
         match speed {
             "fast"     => Ok(self.fast),
             "instant"  => Ok(self.instant),
@@ -51,18 +66,18 @@ impl GasPrice {
 }
 
 #[tokio::main]
-pub async fn gas_price(network: &str) -> Result<GasPrice, Box<dyn std::error::Error>> {
+pub async fn gas_price(network: String) -> Result<GasPrice, Box<dyn std::error::Error>> {
     let client = reqwest::Client::new();
     let resp = client.get(API.to_owned() + "/gas-price")
         .query(&[("api_key", API_KEY),
-                 ("network", network)])
+                 ("network", &network.to_string())])
         .send().await?
         .json::<GasPrice>().await?;
     Ok(resp)
 }
 
 pub fn ethereum_gas_price() -> Result<GasPrice, Box<dyn std::error::Error>> {
-    gas_price("ethereum")
+    Network::Ethereum.gas_price()
 }
 
 pub fn ethereum_gas_price_fast() -> f32 {
