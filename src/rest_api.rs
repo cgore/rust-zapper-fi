@@ -11,6 +11,10 @@ impl Client {
         Client {
         }
     }
+
+    pub fn gas_price(&self, network: Network) -> GasPriceResponse {
+        network.gas_price()
+    }
 }
 
 pub const API: &str = "http://api.zapper.fi/v1";
@@ -52,10 +56,10 @@ pub enum Network {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct GasPriceResponse {
-    fast: f32,
-    instant: f32,
-    standard: f32
+pub struct GasPriceResponse {
+    pub fast: f32,
+    pub instant: f32,
+    pub standard: f32
 }
 
 impl Network {
@@ -71,14 +75,5 @@ impl Network {
     }
     fn gas_price(&self) -> GasPriceResponse {
         self.get_gas_price().unwrap()
-    }
-    pub fn fast_price(&self) -> f32 {
-        self.gas_price().fast
-    }
-    pub fn instant_gas_price(&self) -> f32 {
-        self.gas_price().instant
-    }
-    pub fn standard_gas_price(&self) -> f32 {
-        self.gas_price().standard
     }
 }

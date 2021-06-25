@@ -1,6 +1,7 @@
 use zapper_fi::rest_api;
+use zapper_fi::rest_api::Network;
 
 fn main() {
-    let _client = rest_api::Client::new();
-    println!("{:#?}", rest_api::Network::Ethereum.standard_gas_price());
+    let client = rest_api::Client::new();
+    println!("{:#?}", client.gas_price(Network::Ethereum).standard);
 }
