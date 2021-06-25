@@ -1,10 +1,11 @@
 use serde::{Serialize, Deserialize};
 use std::string::ToString;
+use std::time::Duration;
 use strum_macros::Display;
 
 pub const API: &str = "http://api.zapper.fi/v1";
 
-pub const API_CACHE_TIMEOUT_SECONDS: i32 = 60;
+pub const API_CACHE_TIMEOUT: Duration = Duration::from_secs(60);
 
 pub const API_KEY: &str = "96e0cc51-a62e-42ca-acee-910ea7d2a241";
 
