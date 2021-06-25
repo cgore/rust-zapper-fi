@@ -16,8 +16,19 @@ impl Client {
         }
     }
 
+    #[tokio::main]
+    async fn get_gas_price(&self, network: Network) -> Result<GasPriceResponse, Box<dyn std::error::Error>> {
+        let http_client = reqwest::Client::new();
+        let resp = http_client.get(API.to_owned() + "/gas-price")
+            .query(&[("api_key", API_KEY),
+                     ("network", &network.to_string())])
+            .send().await?
+            .json::<GasPriceResponse>().await?;
+        Ok(resp)
+    }
+
     pub fn gas_price(&self, network: Network) -> GasPriceResponse {
-        network.gas_price()
+        self.get_gas_price(network).unwrap()
     }
 }
 
@@ -64,20 +75,4 @@ pub struct GasPriceResponse {
     pub fast: f32,
     pub instant: f32,
     pub standard: f32
-}
-
-impl Network {
-    #[tokio::main]
-    async fn get_gas_price(&self) -> Result<GasPriceResponse, Box<dyn std::error::Error>> {
-        let client = reqwest::Client::new();
-        let resp = client.get(API.to_owned() + "/gas-price")
-            .query(&[("api_key", API_KEY),
-                     ("network", &self.to_string())])
-            .send().await?
-            .json::<GasPriceResponse>().await?;
-        Ok(resp)
-    }
-    fn gas_price(&self) -> GasPriceResponse {
-        self.get_gas_price().unwrap()
-    }
 }
