@@ -5,10 +5,14 @@ use strum::EnumCount;
 use strum_macros::{Display, EnumCount as EnumCountMacro, EnumIter};
 use ttl_cache::TtlCache;
 
-pub const DEFAULT_API_KEY: &str = "96e0cc51-a62e-42ca-acee-910ea7d2a241";
+const DEFAULT_API_CACHE_TIMEOUT: Duration = Duration::from_secs(60);
+const DEFAULT_API_KEY: &str = "96e0cc51-a62e-42ca-acee-910ea7d2a241";
+const DEFAULT_API_URL: &str = "http://api.zapper.fi/v1";
 
 pub struct Client {
+    api_cache_timeout: Duration,
     api_key: String,
+    api_url: String,
     gas_price_cache: TtlCache<Network, GasPriceResponse>,
     http: reqwest::Client
 }
@@ -16,7 +20,9 @@ pub struct Client {
 impl Client {
     pub fn new() -> Client {
         Client {
+            api_cache_timeout: DEFAULT_API_CACHE_TIMEOUT,
             api_key: DEFAULT_API_KEY.to_string(),
+            api_url: DEFAULT_API_URL.to_string(),
             gas_price_cache: TtlCache::new(Network::COUNT),
             http: reqwest::Client::new()
         }
@@ -24,7 +30,7 @@ impl Client {
 
     #[tokio::main]
     async fn get_gas_price(&self, network: Network) -> Result<GasPriceResponse, Box<dyn std::error::Error>> {
-        let resp = self.http.get(API.to_owned() + "/gas-price")
+        let resp = self.http.get(self.api_url.to_owned() + "/gas-price")
             .query(&[("api_key", &self.api_key),
                      ("network", &network.to_string())])
             .send().await?
@@ -36,10 +42,6 @@ impl Client {
         self.get_gas_price(network).unwrap()
     }
 }
-
-pub const API: &str = "http://api.zapper.fi/v1";
-
-pub const API_CACHE_TIMEOUT: Duration = Duration::from_secs(60);
 
 pub const VALID_PROTOCOLS: &'static [&str] = &[
     "aave", "aave-amm", "aave-v2", "alpha", "b-protocol", "badger", "balancer", "bancor",
