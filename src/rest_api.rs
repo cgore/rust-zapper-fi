@@ -1,7 +1,8 @@
 use serde::{Serialize, Deserialize};
 use std::string::ToString;
 use std::time::Duration;
-use strum_macros::Display;
+use strum::EnumCount;
+use strum_macros::{Display, EnumCount as EnumCountMacro, EnumIter};
 use ttl_cache::TtlCache;
 
 pub struct Client {
@@ -11,7 +12,7 @@ pub struct Client {
 impl Client {
     pub fn new() -> Client {
         Client {
-            gas_price_cache: TtlCache::new(10)
+            gas_price_cache: TtlCache::new(Network::COUNT)
         }
     }
 
@@ -46,7 +47,7 @@ pub const VALID_POOLS: &'static [&str] = &[
     "sfinance", "snowswap", "sushiswap", "uniswap", "linkswap", "dodo", "saddle", "xsigma"
 ];
 
-#[derive(Display, Debug, Eq, Hash, PartialEq)]
+#[derive(Display, Debug, Eq, EnumCountMacro, EnumIter, Hash, PartialEq)]
 pub enum Network {
     #[strum(serialize = "binance-smart-chain")]
     BinanceSmartChain,
