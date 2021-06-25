@@ -3,6 +3,16 @@ use std::string::ToString;
 use std::time::Duration;
 use strum_macros::Display;
 
+pub struct Client {
+}
+
+impl Client {
+    pub fn new() -> Client {
+        Client {
+        }
+    }
+}
+
 pub const API: &str = "http://api.zapper.fi/v1";
 
 pub const API_CACHE_TIMEOUT: Duration = Duration::from_secs(60);
