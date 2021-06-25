@@ -38,8 +38,18 @@ impl Client {
         Ok(resp)
     }
 
-    pub fn gas_price(&self, network: Network) -> GasPriceResponse {
-        self.get_gas_price(network).unwrap()
+    fn update_gas_price(&mut self, network: Network) -> GasPriceResponse {
+        println!("updating the gas price");
+        let result = self.get_gas_price(network).unwrap();
+        self.gas_price_cache.insert(network, result, self.api_cache_timeout);
+        result
+    }
+
+    pub fn gas_price(&mut self, network: Network) -> GasPriceResponse {
+        match self.gas_price_cache.get(&network) {
+            Some(result) => *result,
+            None => self.update_gas_price(network)
+        }
     }
 }
 
@@ -63,7 +73,7 @@ pub const VALID_POOLS: &'static [&str] = &[
     "sfinance", "snowswap", "sushiswap", "uniswap", "linkswap", "dodo", "saddle", "xsigma"
 ];
 
-#[derive(Display, Debug, Eq, EnumCountMacro, EnumIter, Hash, PartialEq)]
+#[derive(Copy, Clone, Display, Debug, Eq, EnumCountMacro, EnumIter, Hash, PartialEq)]
 pub enum Network {
     #[strum(serialize = "binance-smart-chain")]
     BinanceSmartChain,
@@ -75,7 +85,7 @@ pub enum Network {
     XDAI
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
 pub struct GasPriceResponse {
     pub fast: f32,
     pub instant: f32,
