@@ -5,22 +5,27 @@ use strum::EnumCount;
 use strum_macros::{Display, EnumCount as EnumCountMacro, EnumIter};
 use ttl_cache::TtlCache;
 
+pub const DEFAULT_API_KEY: &str = "96e0cc51-a62e-42ca-acee-910ea7d2a241";
+
 pub struct Client {
-    gas_price_cache: TtlCache<Network, GasPriceResponse>
+    api_key: String,
+    gas_price_cache: TtlCache<Network, GasPriceResponse>,
+    http: reqwest::Client
 }
 
 impl Client {
     pub fn new() -> Client {
         Client {
-            gas_price_cache: TtlCache::new(Network::COUNT)
+            api_key: DEFAULT_API_KEY.to_string(),
+            gas_price_cache: TtlCache::new(Network::COUNT),
+            http: reqwest::Client::new()
         }
     }
 
     #[tokio::main]
     async fn get_gas_price(&self, network: Network) -> Result<GasPriceResponse, Box<dyn std::error::Error>> {
-        let http_client = reqwest::Client::new();
-        let resp = http_client.get(API.to_owned() + "/gas-price")
-            .query(&[("api_key", API_KEY),
+        let resp = self.http.get(API.to_owned() + "/gas-price")
+            .query(&[("api_key", &self.api_key),
                      ("network", &network.to_string())])
             .send().await?
             .json::<GasPriceResponse>().await?;
@@ -35,8 +40,6 @@ impl Client {
 pub const API: &str = "http://api.zapper.fi/v1";
 
 pub const API_CACHE_TIMEOUT: Duration = Duration::from_secs(60);
-
-pub const API_KEY: &str = "96e0cc51-a62e-42ca-acee-910ea7d2a241";
 
 pub const VALID_PROTOCOLS: &'static [&str] = &[
     "aave", "aave-amm", "aave-v2", "alpha", "b-protocol", "badger", "balancer", "bancor",
