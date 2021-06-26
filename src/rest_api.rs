@@ -1,5 +1,6 @@
 use rust_decimal::Decimal;
 use serde::{Serialize, Deserialize};
+use std::collections::HashMap;
 use std::string::ToString;
 use std::time::Duration;
 use strum::EnumCount;
@@ -30,6 +31,15 @@ impl Client {
     }
 
     #[tokio::main]
+    async fn get_fiat_rates(&self) -> Result<HashMap<String, Decimal>, Box<dyn std::error::Error>> {
+        let resp = self.http.get(self.api_url.to_owned() + "/fiat-rates")
+            .query(&[("api_key", &self.api_key)])
+            .send().await?
+            .json::<HashMap<String, Decimal>>().await?;
+        Ok(resp)
+    }
+
+    #[tokio::main]
     async fn get_gas_price(&self, network: Network) -> Result<GasPriceResponse, Box<dyn std::error::Error>> {
         let resp = self.http.get(self.api_url.to_owned() + "/gas-price")
             .query(&[("api_key", &self.api_key),
@@ -44,6 +54,10 @@ impl Client {
         let result = self.get_gas_price(network).unwrap();
         self.gas_price_cache.insert(network, result, self.api_cache_timeout);
         result
+    }
+
+    pub fn fiat_rate(&mut self, fiat_symbol: String) -> Decimal {
+        self.get_fiat_rates().unwrap()[&fiat_symbol]
     }
 
     pub fn gas_price(&mut self, network: Network) -> GasPriceResponse {
