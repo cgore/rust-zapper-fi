@@ -1,3 +1,4 @@
+use rust_decimal::Decimal;
 use serde::{Serialize, Deserialize};
 use std::string::ToString;
 use std::time::Duration;
@@ -87,7 +88,7 @@ pub enum Network {
 
 #[derive(Copy, Clone, Serialize, Deserialize, Debug)]
 pub struct GasPriceResponse {
-    pub fast: f32,
-    pub instant: f32,
-    pub standard: f32
+    pub fast: Decimal,
+    pub instant: Decimal,
+    pub standard: Decimal
 }
