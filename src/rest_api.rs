@@ -31,11 +31,11 @@ impl Client {
     }
 
     #[tokio::main]
-    async fn get_fiat_rates(&self) -> Result<HashMap<String, Decimal>, Box<dyn std::error::Error>> {
+    async fn get_fiat_rates(&self) -> Result<FiatRatesResponse, Box<dyn std::error::Error>> {
         let resp = self.http.get(self.api_url.to_owned() + "/fiat-rates")
             .query(&[("api_key", &self.api_key)])
             .send().await?
-            .json::<HashMap<String, Decimal>>().await?;
+            .json::<FiatRatesResponse>().await?;
         Ok(resp)
     }
 
@@ -99,6 +99,8 @@ pub enum Network {
     #[strum(serialize = "xdai")]
     XDAI
 }
+
+pub type FiatRatesResponse = HashMap<String, Decimal>;
 
 #[derive(Copy, Clone, Serialize, Deserialize, Debug)]
 pub struct GasPriceResponse {
