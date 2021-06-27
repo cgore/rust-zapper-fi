@@ -15,6 +15,7 @@ pub struct Client {
     api_cache_timeout: Duration,
     api_key: String,
     api_url: String,
+    fiat_rates_cache: TtlCache<bool, FiatRatesResponse>,
     gas_price_cache: TtlCache<Network, GasPriceResponse>,
     http: reqwest::Client
 }
@@ -25,6 +26,7 @@ impl Client {
             api_cache_timeout: DEFAULT_API_CACHE_TIMEOUT,
             api_key: DEFAULT_API_KEY.to_string(),
             api_url: DEFAULT_API_URL.to_string(),
+            fiat_rates_cache: TtlCache::new(1),
             gas_price_cache: TtlCache::new(Network::COUNT),
             http: reqwest::Client::new()
         }
@@ -32,6 +34,7 @@ impl Client {
 
     #[tokio::main]
     async fn get_fiat_rates(&self) -> Result<FiatRatesResponse, Box<dyn std::error::Error>> {
+        println!("Getting the fiat rates ...");
         let resp = self.http.get(self.api_url.to_owned() + "/fiat-rates")
             .query(&[("api_key", &self.api_key)])
             .send().await?
@@ -49,15 +52,23 @@ impl Client {
         Ok(resp)
     }
 
+    fn update_fiat_rates(&mut self) -> FiatRatesResponse {
+        let result = self.get_fiat_rates().unwrap();
+        self.fiat_rates_cache.insert(true, result.clone(), self.api_cache_timeout);
+        result
+    }
+
     fn update_gas_price(&mut self, network: Network) -> GasPriceResponse {
-        println!("updating the gas price");
         let result = self.get_gas_price(network).unwrap();
         self.gas_price_cache.insert(network, result, self.api_cache_timeout);
         result
     }
 
     pub fn fiat_rate(&mut self, fiat_symbol: String) -> Decimal {
-        self.get_fiat_rates().unwrap()[&fiat_symbol]
+        match self.fiat_rates_cache.get(&true) {
+            Some(result) => result[&fiat_symbol],
+            None => self.update_fiat_rates()[&fiat_symbol]
+        }
     }
 
     pub fn gas_price(&mut self, network: Network) -> GasPriceResponse {
