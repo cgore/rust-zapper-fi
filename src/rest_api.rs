@@ -52,6 +52,14 @@ impl Client {
         Ok(resp)
     }
 
+    #[tokio::main]
+    async fn get_health(&self) -> Result<reqwest::Response, Box<dyn std::error::Error>> {
+        let resp = self.http.get(self.api_url.to_owned() + "/health")
+            .query(&[("api_key", &self.api_key)])
+            .send().await?;
+        Ok(resp)
+    }
+
     fn update_fiat_rates(&mut self) -> FiatRatesResponse {
         let result = self.get_fiat_rates().unwrap();
         self.fiat_rates_cache.insert(true, result.clone(), self.api_cache_timeout);
@@ -69,6 +77,10 @@ impl Client {
             Some(result) => result[&fiat_symbol],
             None => self.update_fiat_rates()[&fiat_symbol]
         }
+    }
+
+    pub fn health(self) -> bool {
+        self.get_health().unwrap().status().is_success()
     }
 
     pub fn gas_price(&mut self, network: Network) -> GasPriceResponse {
